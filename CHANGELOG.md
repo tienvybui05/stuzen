@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-05-13 18:49
+
+- Initialized and pushed the project to GitHub at `https://github.com/tienvybui05/stuzen`.
+- Deployed StuZen to Vercel production at `https://stuzen.vercel.app`.
+- Added `.vercel` to `.gitignore` after linking the local project to Vercel.
+- Verified the production page returns HTTP 200 and the Firebase environment config is present in the production bundle.
+
 ## 2026-05-13 18:37
 
 - Added `.env` to `.gitignore` before preparing the project for Git/Vercel deployment.
