@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
 const RATE_LIMIT_MS = 60_000
+const CONTACT_TO_EMAIL = process.env.CONTACT_TO_EMAIL ?? 'support@stuzen.io.vn'
+const RESEND_FROM_EMAIL =
+  process.env.RESEND_FROM_EMAIL ?? 'StuZen <support@stuzen.io.vn>'
 const requestsByIp = new Map<string, number>()
 
 function getClientIp(request: Request) {
@@ -72,10 +75,10 @@ export async function POST(request: Request) {
   requestsByIp.set(ip, now)
 
   const { error } = await resend.emails.send({
-    from: 'StuZen <onboarding@resend.dev>',
+    from: RESEND_FROM_EMAIL,
     replyTo: email,
     subject: `StuZen contact từ ${name}`,
-    to: 'support@stuzen.io.vn',
+    to: CONTACT_TO_EMAIL,
     text: [
       `Name: ${name}`,
       `Email: ${email}`,

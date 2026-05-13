@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-05-13 22:32
+
+- Updated the contact API to use configurable `RESEND_FROM_EMAIL` and `CONTACT_TO_EMAIL` environment variables.
+- Set the default contact sender/recipient to `support@stuzen.io.vn` so Resend can work after the `stuzen.io.vn` domain is verified.
+- Updated `.env.example` and README with Resend sender/recipient environment variables and domain verification guidance.
+- Verified the project with `npm run lint`; local `npm run build` was blocked by a locked `.next/turbopack` cache.
+
 ## 2026-05-13 22:27
 
 - Updated `.vercelignore` to prevent local `.env` files from being uploaded by Vercel CLI deploys.
