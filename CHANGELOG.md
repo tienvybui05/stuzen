@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-05-13 22:27
+
+- Updated `.vercelignore` to prevent local `.env` files from being uploaded by Vercel CLI deploys.
+- Verified production is now serving Next.js HTML and exposes the `/api/contact` route.
+
 ## 2026-05-13 22:22
 
 - Added `vercel.json` to force Vercel to build StuZen as a Next.js project.
