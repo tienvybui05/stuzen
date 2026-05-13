@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-05-13 21:43
+
+- Migrated the app build entry to Next.js App Router while preserving the existing StuZen UI modules.
+- Added `app/api/contact/route.ts` using Resend to send contact emails to `support@stuzen.io.vn`.
+- Added a responsive `ContactForm` with name, email, message validation, loading state, and success/error toast feedback.
+- Added simple in-memory IP rate limiting for contact submissions.
+- Replaced the old feedback form with the new contact form.
+- Added Next/Tailwind PostCSS configuration and updated npm scripts for `next dev`, `next build`, and `next start`.
+- Updated Firebase client env usage for Next via `NEXT_PUBLIC_FIREBASE_*`, with Vite env fallback mapping in `next.config.ts`.
+- Updated `.env.example` and README with Vercel env setup, including `RESEND_API_KEY`.
+- Verified the project with `npm run build` and `npm run lint`.
+
 ## 2026-05-13 21:29
 
 - Reset dashboard GPA state when Firebase Auth changes to logged-out.
