@@ -18,7 +18,6 @@ import {
   initialCourseValues,
   validateCourseForm,
 } from './plannerUtils'
-import { loadPlannedCourses, savePlannedCourses } from './plannerStorage'
 import type {
   CourseFormErrors,
   CourseFormValues,
@@ -33,9 +32,7 @@ export function SemesterPlanner({ user }: SemesterPlannerProps) {
   const [values, setValues] = useState<CourseFormValues>(initialCourseValues)
   const [errors, setErrors] = useState<CourseFormErrors>({})
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null)
-  const [courses, setCourses] = useState<PlannedCourse[]>(() =>
-    loadPlannedCourses(),
-  )
+  const [courses, setCourses] = useState<PlannedCourse[]>([])
   const [statusMessage, setStatusMessage] = useState('')
 
   const totalCredits = useMemo(() => calculateSemesterCredits(courses), [courses])
@@ -44,8 +41,8 @@ export function SemesterPlanner({ user }: SemesterPlannerProps) {
   useEffect(() => {
     if (!user) {
       Promise.resolve().then(() => {
-        setCourses(loadPlannedCourses())
-        setStatusMessage('')
+        setCourses([])
+        setStatusMessage('Đăng nhập để lưu danh sách môn vào tài khoản của bạn.')
       })
       return
     }
@@ -63,11 +60,6 @@ export function SemesterPlanner({ user }: SemesterPlannerProps) {
         )
       })
   }, [user])
-
-  function updateLocalCourses(nextCourses: PlannedCourse[]) {
-    setCourses(nextCourses)
-    savePlannedCourses(nextCourses)
-  }
 
   function handleChange(field: keyof CourseFormValues, value: string) {
     setValues((current) => ({ ...current, [field]: value }))
@@ -100,7 +92,8 @@ export function SemesterPlanner({ user }: SemesterPlannerProps) {
       )
 
       if (!user) {
-        updateLocalCourses(nextCourses)
+        setStatusMessage('Bạn cần đăng nhập để cập nhật môn học.')
+        return
       } else {
         try {
           await updatePlannedCourse(updatedCourse)
@@ -117,7 +110,8 @@ export function SemesterPlanner({ user }: SemesterPlannerProps) {
       const nextCourse = createPlannedCourse(values)
 
       if (!user) {
-        updateLocalCourses([...courses, nextCourse])
+        setStatusMessage('Bạn cần đăng nhập để lưu môn học.')
+        return
       } else {
         try {
           const cloudId = await savePlannedCourse({
@@ -142,7 +136,8 @@ export function SemesterPlanner({ user }: SemesterPlannerProps) {
 
   async function removeCourse(courseId: string) {
     if (!user) {
-      updateLocalCourses(courses.filter((course) => course.id !== courseId))
+      setStatusMessage('Bạn cần đăng nhập để xóa môn học.')
+      return
     } else {
       try {
         await deletePlannedCourse(courseId)

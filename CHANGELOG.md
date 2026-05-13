@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-05-13 21:15
+
+- Removed guest `localStorage` persistence from GPA history, Upcoming tasks, and Semester planner flows.
+- Kept GPA calculation usable for guests without saving history.
+- Updated task and course forms to require login before saving, updating, or deleting data.
+- Updated GPA history copy to clarify that saved history is only available after login.
+- Verified the project with `npm run build` and `npm run lint`.
+
 ## 2026-05-13 21:07
 
 - Added `uid` and `email` fields to newly saved GPA results, tasks, and planned courses for easier data collection/export.

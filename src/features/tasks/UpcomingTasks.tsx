@@ -9,7 +9,6 @@ import {
   saveTask,
   updateTask,
 } from '../../lib/firebase'
-import { loadTasks, saveTasks } from './taskStorage'
 import {
   createTask,
   getTaskDueState,
@@ -47,15 +46,15 @@ type UpcomingTasksProps = {
 export function UpcomingTasks({ user }: UpcomingTasksProps) {
   const [values, setValues] = useState<TaskFormValues>(initialTaskValues)
   const [errors, setErrors] = useState<TaskFormErrors>({})
-  const [tasks, setTasks] = useState<StudentTask[]>(() => loadTasks())
+  const [tasks, setTasks] = useState<StudentTask[]>([])
   const [statusMessage, setStatusMessage] = useState('')
   const sortedTasks = useMemo(() => sortTasksByDeadline(tasks), [tasks])
 
   useEffect(() => {
     if (!user) {
       Promise.resolve().then(() => {
-        setTasks(loadTasks())
-        setStatusMessage('')
+        setTasks([])
+        setStatusMessage('Đăng nhập để lưu task vào tài khoản của bạn.')
       })
       return
     }
@@ -71,11 +70,6 @@ export function UpcomingTasks({ user }: UpcomingTasksProps) {
         )
       })
   }, [user])
-
-  function updateLocalTasks(nextTasks: StudentTask[]) {
-    setTasks(nextTasks)
-    saveTasks(nextTasks)
-  }
 
   function handleChange(field: keyof TaskFormValues, value: string) {
     setValues((current) => ({ ...current, [field]: value }))
@@ -94,8 +88,7 @@ export function UpcomingTasks({ user }: UpcomingTasksProps) {
     const nextTask = createTask(values)
 
     if (!user) {
-      updateLocalTasks([...tasks, nextTask])
-      setValues(initialTaskValues)
+      setStatusMessage('Bạn cần đăng nhập để lưu task.')
       return
     }
 
@@ -131,7 +124,7 @@ export function UpcomingTasks({ user }: UpcomingTasksProps) {
     const nextTasks = tasks.map((task) => (task.id === taskId ? nextTask : task))
 
     if (!user) {
-      updateLocalTasks(nextTasks)
+      setStatusMessage('Bạn cần đăng nhập để cập nhật task.')
       return
     }
 
@@ -148,7 +141,7 @@ export function UpcomingTasks({ user }: UpcomingTasksProps) {
 
   async function deleteTask(taskId: string) {
     if (!user) {
-      updateLocalTasks(tasks.filter((task) => task.id !== taskId))
+      setStatusMessage('Bạn cần đăng nhập để xóa task.')
       return
     }
 

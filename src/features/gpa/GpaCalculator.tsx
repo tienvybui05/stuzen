@@ -16,11 +16,6 @@ import {
   validateGpaForm,
 } from './gpaUtils'
 import {
-  appendGpaHistory,
-  loadGpaHistory,
-  saveGpaHistory,
-} from './gpaStorage'
-import {
   deleteGpaResult,
   getGpaHistory,
   saveGpaResult,
@@ -30,7 +25,6 @@ import type {
   GpaCalculationSnapshot,
   GpaFormErrors,
   GpaFormValues,
-  GpaHistoryEntry,
   GpaResult,
 } from './types'
 
@@ -45,9 +39,6 @@ export function GpaCalculator({ onCalculate, user }: GpaCalculatorProps) {
   const [result, setResult] = useState<GpaResult>(null)
   const [latestSnapshot, setLatestSnapshot] =
     useState<GpaCalculationSnapshot | null>(null)
-  const [history, setHistory] = useState<GpaHistoryEntry[]>(() =>
-    loadGpaHistory(),
-  )
   const [savedHistory, setSavedHistory] = useState<SavedGpaResult[]>([])
   const [note, setNote] = useState('')
   const [statusMessage, setStatusMessage] = useState('')
@@ -65,14 +56,8 @@ export function GpaCalculator({ onCalculate, user }: GpaCalculatorProps) {
   }, [completedCredits, totalCredits])
 
   useEffect(() => {
-    const latestHistoryEntry = history[0]
-    if (!user && latestHistoryEntry) {
-      onCalculate(latestHistoryEntry)
-    }
-  }, [history, onCalculate, user])
-
-  useEffect(() => {
     if (!user) {
+      Promise.resolve().then(() => setSavedHistory([]))
       return
     }
 
@@ -114,9 +99,6 @@ export function GpaCalculator({ onCalculate, user }: GpaCalculatorProps) {
 
     const snapshot = createGpaSnapshot(values, nextResult)
     setLatestSnapshot(snapshot)
-    const nextHistory = appendGpaHistory(history, snapshot)
-    setHistory(nextHistory)
-    saveGpaHistory(nextHistory)
     onCalculate(snapshot)
   }
 
@@ -144,14 +126,6 @@ export function GpaCalculator({ onCalculate, user }: GpaCalculatorProps) {
     }
   }
 
-  function deleteHistoryItem(historyId: string) {
-    setHistory((current) => {
-      const nextHistory = current.filter((item) => item.id !== historyId)
-      saveGpaHistory(nextHistory)
-      return nextHistory
-    })
-  }
-
   async function deleteSavedHistoryItem(historyId: string) {
     try {
       await deleteGpaResult(historyId)
@@ -164,8 +138,6 @@ export function GpaCalculator({ onCalculate, user }: GpaCalculatorProps) {
       )
     }
   }
-
-  const displayedHistory = user ? savedHistory : history
 
   return (
     <Card
@@ -181,9 +153,9 @@ export function GpaCalculator({ onCalculate, user }: GpaCalculatorProps) {
             values={values}
           />
           <GpaHistoryList
-            history={displayedHistory}
-            mode={user ? 'cloud' : 'local'}
-            onDelete={user ? deleteSavedHistoryItem : deleteHistoryItem}
+            history={user ? savedHistory : []}
+            mode={user ? 'cloud' : 'guest'}
+            onDelete={deleteSavedHistoryItem}
           />
         </div>
 

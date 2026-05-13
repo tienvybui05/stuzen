@@ -1,13 +1,13 @@
 import { Button } from '../../components/ui/Button'
+import type { SavedGpaResult } from '../../lib/firebase'
 import { statusMeta } from './gpaMeta'
 import type { GpaHistoryEntry } from './types'
-import type { SavedGpaResult } from '../../lib/firebase'
 
 type HistoryItem = GpaHistoryEntry | SavedGpaResult
 
 type GpaHistoryListProps = {
   history: HistoryItem[]
-  mode: 'cloud' | 'local'
+  mode: 'cloud' | 'guest'
   onDelete: (historyId: string) => void
 }
 
@@ -42,16 +42,16 @@ export function GpaHistoryList({ history, mode, onDelete }: GpaHistoryListProps)
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h3 className="text-lg font-semibold text-white">
-            {isCloudMode ? 'Lịch sử GPA đã lưu' : 'Lịch sử tính toán tạm'}
+            {isCloudMode ? 'Lịch sử GPA đã lưu' : 'Lịch sử GPA'}
           </h3>
           <p className="mt-1 text-sm text-zinc-400">
             {isCloudMode
               ? 'Dữ liệu được lưu trong Firestore theo tài khoản của bạn.'
-              : 'Guest dùng localStorage tạm trên trình duyệt này.'}
+              : 'Đăng nhập để lưu và xem lịch sử GPA trên tài khoản của bạn.'}
           </p>
         </div>
         <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-400">
-          {isCloudMode ? `${history.length}/20` : history.length}
+          {isCloudMode ? `${history.length}/20` : 0}
         </span>
       </div>
 
@@ -59,7 +59,7 @@ export function GpaHistoryList({ history, mode, onDelete }: GpaHistoryListProps)
         <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-4 text-sm leading-6 text-zinc-400">
           {isCloudMode
             ? 'Chưa có kết quả đã lưu. Bấm “Lưu kết quả” sau khi tính GPA.'
-            : 'Chưa có lịch sử tạm. Mỗi lần bấm tính toán hợp lệ sẽ được lưu vào localStorage.'}
+            : 'Guest không lưu lịch sử. Hãy đăng nhập rồi bấm “Lưu kết quả”.'}
         </div>
       ) : (
         <div className="space-y-3">
