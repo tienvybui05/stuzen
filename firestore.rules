@@ -14,6 +14,45 @@ service cloud.firestore {
       return value is int || value is float;
     }
 
+    function validTask(data) {
+      return data.keys().hasOnly([
+        'title',
+        'deadline',
+        'category',
+        'priority',
+        'status',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.title is string
+      && data.title.size() >= 1
+      && data.title.size() <= 140
+      && data.deadline is string
+      && data.deadline.size() == 10
+      && data.category in ['Assignment', 'Exam', 'Project', 'Other']
+      && data.priority in ['Low', 'Medium', 'High']
+      && data.status in ['pending', 'done']
+      && data.createdAt is string;
+    }
+
+    function validPlannedCourse(data) {
+      return data.keys().hasOnly([
+        'name',
+        'credits',
+        'expectedGrade',
+        'updatedAt'
+      ])
+      && data.name is string
+      && data.name.size() >= 1
+      && data.name.size() <= 120
+      && isNumber(data.credits)
+      && data.credits > 0
+      && data.credits <= 30
+      && isNumber(data.expectedGrade)
+      && data.expectedGrade >= 0
+      && data.expectedGrade <= 4;
+    }
+
     match /users/{uid} {
       allow read, update, delete: if isOwner(uid);
       allow create: if isOwner(uid)
@@ -58,6 +97,18 @@ service cloud.firestore {
           && request.resource.data.status in ['feasible', 'difficult', 'impossible']
           && isNumber(request.resource.data.totalCredits);
         allow update: if false;
+      }
+
+      match /tasks/{taskId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && validTask(request.resource.data);
+      }
+
+      match /plannedCourses/{courseId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && validPlannedCourse(request.resource.data);
       }
     }
 

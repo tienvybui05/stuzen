@@ -1,9 +1,16 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
+import type { User } from 'firebase/auth'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { Input } from '../../components/ui/Input'
 import { NumberInput } from '../../components/ui/NumberInput'
+import {
+  deletePlannedCourse,
+  getPlannedCourses,
+  savePlannedCourse,
+  updatePlannedCourse,
+} from '../../lib/firebase'
 import {
   calculateSemesterCredits,
   calculateSemesterGpa,
@@ -18,23 +25,56 @@ import type {
   PlannedCourse,
 } from './types'
 
-export function SemesterPlanner() {
+type SemesterPlannerProps = {
+  user: User | null
+}
+
+export function SemesterPlanner({ user }: SemesterPlannerProps) {
   const [values, setValues] = useState<CourseFormValues>(initialCourseValues)
   const [errors, setErrors] = useState<CourseFormErrors>({})
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null)
   const [courses, setCourses] = useState<PlannedCourse[]>(() =>
     loadPlannedCourses(),
   )
+  const [statusMessage, setStatusMessage] = useState('')
 
   const totalCredits = useMemo(() => calculateSemesterCredits(courses), [courses])
   const semesterGpa = useMemo(() => calculateSemesterGpa(courses), [courses])
+
+  useEffect(() => {
+    if (!user) {
+      Promise.resolve().then(() => {
+        setCourses(loadPlannedCourses())
+        setStatusMessage('')
+      })
+      return
+    }
+
+    getPlannedCourses()
+      .then((items) => {
+        setCourses(items)
+        setStatusMessage('')
+      })
+      .catch((error: unknown) => {
+        setStatusMessage(
+          error instanceof Error
+            ? error.message
+            : 'Không tải được danh sách môn đã lưu.',
+        )
+      })
+  }, [user])
+
+  function updateLocalCourses(nextCourses: PlannedCourse[]) {
+    setCourses(nextCourses)
+    savePlannedCourses(nextCourses)
+  }
 
   function handleChange(field: keyof CourseFormValues, value: string) {
     setValues((current) => ({ ...current, [field]: value }))
     setErrors((current) => ({ ...current, [field]: undefined }))
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const nextErrors = validateCourseForm(values)
     setErrors(nextErrors)
@@ -43,32 +83,78 @@ export function SemesterPlanner() {
       return
     }
 
-    setCourses((current) => {
-      const nextCourses = editingCourseId
-        ? current.map((course) =>
-            course.id === editingCourseId
-              ? {
-                  ...course,
-                  credits: Number(values.credits),
-                  expectedGrade: Number(values.expectedGrade),
-                  name: values.name.trim(),
-                }
-              : course,
+    if (editingCourseId) {
+      const existingCourse = courses.find((course) => course.id === editingCourseId)
+      if (!existingCourse) {
+        return
+      }
+
+      const updatedCourse: PlannedCourse = {
+        ...existingCourse,
+        credits: Number(values.credits),
+        expectedGrade: Number(values.expectedGrade),
+        name: values.name.trim(),
+      }
+      const nextCourses = courses.map((course) =>
+        course.id === editingCourseId ? updatedCourse : course,
+      )
+
+      if (!user) {
+        updateLocalCourses(nextCourses)
+      } else {
+        try {
+          await updatePlannedCourse(updatedCourse)
+          setCourses(nextCourses)
+          setStatusMessage('Đã cập nhật môn học.')
+        } catch (error) {
+          setStatusMessage(
+            error instanceof Error ? error.message : 'Không cập nhật được môn học.',
           )
-        : [...current, createPlannedCourse(values)]
-      savePlannedCourses(nextCourses)
-      return nextCourses
-    })
+          return
+        }
+      }
+    } else {
+      const nextCourse = createPlannedCourse(values)
+
+      if (!user) {
+        updateLocalCourses([...courses, nextCourse])
+      } else {
+        try {
+          const cloudId = await savePlannedCourse({
+            credits: nextCourse.credits,
+            expectedGrade: nextCourse.expectedGrade,
+            name: nextCourse.name,
+          })
+          setCourses((current) => [...current, { ...nextCourse, id: cloudId }])
+          setStatusMessage('Đã lưu môn học lên tài khoản của bạn.')
+        } catch (error) {
+          setStatusMessage(
+            error instanceof Error ? error.message : 'Không lưu được môn học.',
+          )
+          return
+        }
+      }
+    }
+
     setValues(initialCourseValues)
     setEditingCourseId(null)
   }
 
-  function removeCourse(courseId: string) {
-    setCourses((current) => {
-      const nextCourses = current.filter((course) => course.id !== courseId)
-      savePlannedCourses(nextCourses)
-      return nextCourses
-    })
+  async function removeCourse(courseId: string) {
+    if (!user) {
+      updateLocalCourses(courses.filter((course) => course.id !== courseId))
+    } else {
+      try {
+        await deletePlannedCourse(courseId)
+        setCourses((current) => current.filter((course) => course.id !== courseId))
+        setStatusMessage('Đã xóa môn học.')
+      } catch (error) {
+        setStatusMessage(
+          error instanceof Error ? error.message : 'Không xóa được môn học.',
+        )
+        return
+      }
+    }
 
     if (editingCourseId === courseId) {
       setEditingCourseId(null)
@@ -141,6 +227,9 @@ export function SemesterPlanner() {
               </Button>
             )}
           </div>
+          {statusMessage && (
+            <p className="text-sm leading-6 text-cyan-200">{statusMessage}</p>
+          )}
         </form>
 
         <div className="grid gap-4">
@@ -189,7 +278,7 @@ export function SemesterPlanner() {
                       </Button>
                       <Button
                         className="rounded-xl px-3 py-2"
-                        onClick={() => removeCourse(course.id)}
+                        onClick={() => void removeCourse(course.id)}
                         variant="danger"
                       >
                         Xóa

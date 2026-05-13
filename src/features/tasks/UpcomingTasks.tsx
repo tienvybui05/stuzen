@@ -1,7 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
+import type { User } from 'firebase/auth'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
+import {
+  deleteTask as deleteCloudTask,
+  getTasks,
+  saveTask,
+  updateTask,
+} from '../../lib/firebase'
 import { loadTasks, saveTasks } from './taskStorage'
 import {
   createTask,
@@ -33,13 +40,39 @@ const priorityClass = {
   High: 'text-rose-200',
 }
 
-export function UpcomingTasks() {
+type UpcomingTasksProps = {
+  user: User | null
+}
+
+export function UpcomingTasks({ user }: UpcomingTasksProps) {
   const [values, setValues] = useState<TaskFormValues>(initialTaskValues)
   const [errors, setErrors] = useState<TaskFormErrors>({})
   const [tasks, setTasks] = useState<StudentTask[]>(() => loadTasks())
+  const [statusMessage, setStatusMessage] = useState('')
   const sortedTasks = useMemo(() => sortTasksByDeadline(tasks), [tasks])
 
-  function updateTasks(nextTasks: StudentTask[]) {
+  useEffect(() => {
+    if (!user) {
+      Promise.resolve().then(() => {
+        setTasks(loadTasks())
+        setStatusMessage('')
+      })
+      return
+    }
+
+    getTasks()
+      .then((items) => {
+        setTasks(items)
+        setStatusMessage('')
+      })
+      .catch((error: unknown) => {
+        setStatusMessage(
+          error instanceof Error ? error.message : 'Không tải được task đã lưu.',
+        )
+      })
+  }, [user])
+
+  function updateLocalTasks(nextTasks: StudentTask[]) {
     setTasks(nextTasks)
     saveTasks(nextTasks)
   }
@@ -49,7 +82,7 @@ export function UpcomingTasks() {
     setErrors((current) => ({ ...current, [field]: undefined }))
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const nextErrors = validateTaskForm(values)
     setErrors(nextErrors)
@@ -58,22 +91,76 @@ export function UpcomingTasks() {
       return
     }
 
-    updateTasks([...tasks, createTask(values)])
-    setValues(initialTaskValues)
+    const nextTask = createTask(values)
+
+    if (!user) {
+      updateLocalTasks([...tasks, nextTask])
+      setValues(initialTaskValues)
+      return
+    }
+
+    try {
+      const cloudId = await saveTask({
+        category: nextTask.category,
+        createdAt: nextTask.createdAt,
+        deadline: nextTask.deadline,
+        priority: nextTask.priority,
+        status: nextTask.status,
+        title: nextTask.title,
+      })
+      setTasks((current) => [...current, { ...nextTask, id: cloudId }])
+      setValues(initialTaskValues)
+      setStatusMessage('Đã lưu task lên tài khoản của bạn.')
+    } catch (error) {
+      setStatusMessage(
+        error instanceof Error ? error.message : 'Không lưu được task.',
+      )
+    }
   }
 
-  function toggleDone(taskId: string) {
-    updateTasks(
-      tasks.map((task) =>
-        task.id === taskId
-          ? { ...task, status: task.status === 'done' ? 'pending' : 'done' }
-          : task,
-      ),
-    )
+  async function toggleDone(taskId: string) {
+    const targetTask = tasks.find((task) => task.id === taskId)
+    if (!targetTask) {
+      return
+    }
+
+    const nextTask: StudentTask = {
+      ...targetTask,
+      status: targetTask.status === 'done' ? 'pending' : 'done',
+    }
+    const nextTasks = tasks.map((task) => (task.id === taskId ? nextTask : task))
+
+    if (!user) {
+      updateLocalTasks(nextTasks)
+      return
+    }
+
+    try {
+      await updateTask(nextTask)
+      setTasks(nextTasks)
+      setStatusMessage('')
+    } catch (error) {
+      setStatusMessage(
+        error instanceof Error ? error.message : 'Không cập nhật được task.',
+      )
+    }
   }
 
-  function deleteTask(taskId: string) {
-    updateTasks(tasks.filter((task) => task.id !== taskId))
+  async function deleteTask(taskId: string) {
+    if (!user) {
+      updateLocalTasks(tasks.filter((task) => task.id !== taskId))
+      return
+    }
+
+    try {
+      await deleteCloudTask(taskId)
+      setTasks((current) => current.filter((task) => task.id !== taskId))
+      setStatusMessage('Đã xóa task.')
+    } catch (error) {
+      setStatusMessage(
+        error instanceof Error ? error.message : 'Không xóa được task.',
+      )
+    }
   }
 
   return (
@@ -113,6 +200,9 @@ export function UpcomingTasks() {
         <Button className="w-full" type="submit">
           Thêm task
         </Button>
+        {statusMessage && (
+          <p className="text-sm leading-6 text-cyan-200">{statusMessage}</p>
+        )}
       </form>
 
       <div className="space-y-3">
@@ -145,7 +235,7 @@ export function UpcomingTasks() {
                       <input
                         checked={task.status === 'done'}
                         className="mt-1 h-4 w-4 rounded border-white/20 accent-cyan-300"
-                        onChange={() => toggleDone(task.id)}
+                        onChange={() => void toggleDone(task.id)}
                         type="checkbox"
                       />
                       <span className="min-w-0">
@@ -173,7 +263,7 @@ export function UpcomingTasks() {
                       </span>
                       <Button
                         className="rounded-full px-3 py-1 text-xs"
-                        onClick={() => deleteTask(task.id)}
+                        onClick={() => void deleteTask(task.id)}
                         variant="danger"
                       >
                         Xóa

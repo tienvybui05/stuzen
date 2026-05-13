@@ -1,9 +1,11 @@
 import type { GpaCalculationSnapshot } from '../gpa/types'
 import type { ReactNode } from 'react'
+import type { User } from 'firebase/auth'
 import { UpcomingTasks } from '../tasks/UpcomingTasks'
 
 type StudentDashboardProps = {
   latestGpa: GpaCalculationSnapshot | null
+  user: User | null
 }
 
 const statusLabel = {
@@ -18,7 +20,7 @@ const actionItems = [
   { href: '#cta', label: 'Bắt đầu theo dõi' },
 ]
 
-export function StudentDashboard({ latestGpa }: StudentDashboardProps) {
+export function StudentDashboard({ latestGpa, user }: StudentDashboardProps) {
   const semesterProgress = latestGpa
     ? Math.round((latestGpa.completedCredits / latestGpa.totalCredits) * 100)
     : 0
@@ -85,7 +87,7 @@ export function StudentDashboard({ latestGpa }: StudentDashboardProps) {
 
         <div className="grid gap-4">
           <DashboardPanel title="Upcoming tasks" className="xl:min-h-[620px]">
-            <UpcomingTasks />
+            <UpcomingTasks user={user} />
           </DashboardPanel>
 
           <DashboardPanel title="Quick actions">

@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-05-13 21:00
+
+- Added Firestore persistence for logged-in users' Upcoming tasks.
+- Added Firestore persistence for logged-in users' Semester planner courses, including add, edit, and delete flows.
+- Kept guest mode using localStorage for tasks and semester planning.
+- Added Firebase helpers for task and planned course CRUD operations.
+- Passed the authenticated user state into dashboard task and semester planner modules.
+- Extended Firestore Security Rules for `users/{uid}/tasks` and `users/{uid}/plannedCourses`.
+- Added `firebase.json` so Firestore rules can be deployed with Firebase CLI.
+- Verified the project with `npm run build` and `npm run lint`.
+
 ## 2026-05-13 18:49
 
 - Initialized and pushed the project to GitHub at `https://github.com/tienvybui05/stuzen`.

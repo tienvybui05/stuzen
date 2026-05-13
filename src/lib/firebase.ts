@@ -21,6 +21,8 @@ import {
   setDoc,
 } from 'firebase/firestore'
 import type { GpaCalculationSnapshot } from '../features/gpa/types'
+import type { PlannedCourse } from '../features/planner/types'
+import type { StudentTask } from '../features/tasks/types'
 
 export type SavedGpaResult = GpaCalculationSnapshot & {
   createdAt?: unknown
@@ -139,6 +141,113 @@ export async function getGpaHistory() {
 export async function deleteGpaResult(id: string) {
   const user = requireUser()
   await deleteDoc(doc(db, 'users', user.uid, 'gpaResults', id))
+}
+
+export async function saveTask(data: Omit<StudentTask, 'id'>) {
+  const user = requireUser()
+  const tasksRef = collection(db, 'users', user.uid, 'tasks')
+  const docRef = await addDoc(tasksRef, {
+    category: data.category,
+    createdAt: data.createdAt,
+    deadline: data.deadline,
+    priority: data.priority,
+    status: data.status,
+    title: data.title,
+    updatedAt: serverTimestamp(),
+  })
+
+  return docRef.id
+}
+
+export async function getTasks() {
+  const user = requireUser()
+  const tasksRef = collection(db, 'users', user.uid, 'tasks')
+  const snapshot = await getDocs(query(tasksRef, orderBy('deadline', 'asc')))
+
+  return snapshot.docs.map((taskDoc) => {
+    const data = taskDoc.data()
+
+    return {
+      category: data.category ?? 'Other',
+      createdAt: String(data.createdAt ?? ''),
+      deadline: String(data.deadline ?? ''),
+      id: taskDoc.id,
+      priority: data.priority ?? 'Medium',
+      status: data.status ?? 'pending',
+      title: String(data.title ?? ''),
+    } as StudentTask
+  })
+}
+
+export async function updateTask(data: StudentTask) {
+  const user = requireUser()
+  await setDoc(
+    doc(db, 'users', user.uid, 'tasks', data.id),
+    {
+      category: data.category,
+      createdAt: data.createdAt,
+      deadline: data.deadline,
+      priority: data.priority,
+      status: data.status,
+      title: data.title,
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  )
+}
+
+export async function deleteTask(id: string) {
+  const user = requireUser()
+  await deleteDoc(doc(db, 'users', user.uid, 'tasks', id))
+}
+
+export async function savePlannedCourse(data: Omit<PlannedCourse, 'id'>) {
+  const user = requireUser()
+  const coursesRef = collection(db, 'users', user.uid, 'plannedCourses')
+  const docRef = await addDoc(coursesRef, {
+    credits: data.credits,
+    expectedGrade: data.expectedGrade,
+    name: data.name,
+    updatedAt: serverTimestamp(),
+  })
+
+  return docRef.id
+}
+
+export async function getPlannedCourses() {
+  const user = requireUser()
+  const coursesRef = collection(db, 'users', user.uid, 'plannedCourses')
+  const snapshot = await getDocs(query(coursesRef, orderBy('name', 'asc')))
+
+  return snapshot.docs.map((courseDoc) => {
+    const data = courseDoc.data()
+
+    return {
+      credits: Number(data.credits ?? 0),
+      expectedGrade: Number(data.expectedGrade ?? 0),
+      id: courseDoc.id,
+      name: String(data.name ?? ''),
+    } as PlannedCourse
+  })
+}
+
+export async function updatePlannedCourse(data: PlannedCourse) {
+  const user = requireUser()
+  await setDoc(
+    doc(db, 'users', user.uid, 'plannedCourses', data.id),
+    {
+      credits: data.credits,
+      expectedGrade: data.expectedGrade,
+      name: data.name,
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  )
+}
+
+export async function deletePlannedCourse(id: string) {
+  const user = requireUser()
+  await deleteDoc(doc(db, 'users', user.uid, 'plannedCourses', id))
 }
 
 export async function submitFeedback(message: string) {

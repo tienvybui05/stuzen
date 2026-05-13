@@ -160,7 +160,7 @@ function App() {
           </div>
         </section>
 
-        <StudentDashboard latestGpa={latestGpa} />
+        <StudentDashboard latestGpa={latestGpa} user={user} />
 
         <StudyAnalyticsDashboard latestGpa={latestGpa} />
 
@@ -193,7 +193,7 @@ function App() {
         </section>
 
         <section className="scroll-mt-24" id="planner">
-          <SemesterPlanner />
+          <SemesterPlanner user={user} />
         </section>
 
         <section className="scroll-mt-24" id="feedback">
