@@ -57,7 +57,13 @@ export function GpaCalculator({ onCalculate, user }: GpaCalculatorProps) {
 
   useEffect(() => {
     if (!user) {
-      Promise.resolve().then(() => setSavedHistory([]))
+      Promise.resolve().then(() => {
+        setSavedHistory([])
+        setLatestSnapshot(null)
+        setResult(null)
+        setNote('')
+        setStatusMessage('')
+      })
       return
     }
 

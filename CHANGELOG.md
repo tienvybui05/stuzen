@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-05-13 21:29
+
+- Reset dashboard GPA state when Firebase Auth changes to logged-out.
+- Cleared the visible GPA result, pending save snapshot, note, status message, and saved history when the user logs out.
+- Added `firebase-debug.log` to `.gitignore`.
+- Verified the project with `npm run build` and `npm run lint`.
+
 ## 2026-05-13 21:15
 
 - Removed guest `localStorage` persistence from GPA history, Upcoming tasks, and Semester planner flows.

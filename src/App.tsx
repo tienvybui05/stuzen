@@ -54,7 +54,17 @@ function App() {
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme)
   const [user, setUser] = useState<User | null>(null)
 
-  useEffect(() => onAuthStateChanged(auth, setUser), [])
+  useEffect(
+    () =>
+      onAuthStateChanged(auth, (nextUser) => {
+        setUser(nextUser)
+
+        if (!nextUser) {
+          setLatestGpa(null)
+        }
+      }),
+    [],
+  )
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
