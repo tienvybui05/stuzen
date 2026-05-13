@@ -1,0 +1,82 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isNumber(value) {
+      return value is int || value is float;
+    }
+
+    match /users/{uid} {
+      allow read, update, delete: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+          'displayName',
+          'email',
+          'photoURL',
+          'createdAt',
+          'lastLoginAt'
+        ])
+        && request.resource.data.displayName is string
+        && request.resource.data.email is string
+        && request.resource.data.photoURL is string;
+
+      match /gpaResults/{resultId} {
+        allow read, delete: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && request.resource.data.keys().hasOnly([
+            'currentGpa',
+            'currentCredits',
+            'targetGpa',
+            'remainingCredits',
+            'requiredGpa',
+            'note',
+            'status',
+            'totalCredits',
+            'createdAt'
+          ])
+          && isNumber(request.resource.data.currentGpa)
+          && request.resource.data.currentGpa >= 0
+          && request.resource.data.currentGpa <= 4
+          && isNumber(request.resource.data.currentCredits)
+          && request.resource.data.currentCredits >= 0
+          && isNumber(request.resource.data.targetGpa)
+          && request.resource.data.targetGpa >= 0
+          && request.resource.data.targetGpa <= 4
+          && isNumber(request.resource.data.remainingCredits)
+          && request.resource.data.remainingCredits > 0
+          && isNumber(request.resource.data.requiredGpa)
+          && request.resource.data.note is string
+          && request.resource.data.note.size() <= 240
+          && request.resource.data.status in ['feasible', 'difficult', 'impossible']
+          && isNumber(request.resource.data.totalCredits);
+        allow update: if false;
+      }
+    }
+
+    match /feedbacks/{feedbackId} {
+      allow create: if request.resource.data.keys().hasOnly([
+        'uid',
+        'email',
+        'message',
+        'page',
+        'createdAt'
+      ])
+      && request.resource.data.message is string
+      && request.resource.data.message.size() >= 1
+      && request.resource.data.message.size() <= 1000
+      && (request.resource.data.uid == null || request.resource.data.uid is string)
+      && (request.resource.data.email == null || request.resource.data.email is string)
+      && request.resource.data.page is string
+      && request.resource.data.page.size() <= 200;
+      allow read, update, delete: if false;
+    }
+  }
+}
