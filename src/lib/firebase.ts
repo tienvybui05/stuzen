@@ -103,12 +103,14 @@ export async function saveGpaResult(
   const docRef = await addDoc(resultsRef, {
     currentGpa: data.currentGpa,
     currentCredits: data.completedCredits,
+    email: user.email ?? '',
     targetGpa: data.targetGpa,
     remainingCredits: data.remainingCredits,
     requiredGpa: data.requiredGpa,
     note: data.note ?? '',
     status: data.status,
     totalCredits: data.totalCredits,
+    uid: user.uid,
     createdAt: serverTimestamp(),
   })
 
@@ -128,12 +130,14 @@ export async function getGpaHistory() {
       completedCredits: Number(data.currentCredits ?? 0),
       currentGpa: Number(data.currentGpa ?? 0),
       createdAt: data.createdAt,
+      email: String(data.email ?? ''),
       note: String(data.note ?? ''),
       remainingCredits: Number(data.remainingCredits ?? 0),
       requiredGpa: Number(data.requiredGpa ?? 0),
       status: data.status ?? 'feasible',
       targetGpa: Number(data.targetGpa ?? 0),
       totalCredits: Number(data.totalCredits ?? 0),
+      uid: String(data.uid ?? ''),
     } as SavedGpaResult
   })
 }
@@ -150,9 +154,11 @@ export async function saveTask(data: Omit<StudentTask, 'id'>) {
     category: data.category,
     createdAt: data.createdAt,
     deadline: data.deadline,
+    email: user.email ?? '',
     priority: data.priority,
     status: data.status,
     title: data.title,
+    uid: user.uid,
     updatedAt: serverTimestamp(),
   })
 
@@ -187,9 +193,11 @@ export async function updateTask(data: StudentTask) {
       category: data.category,
       createdAt: data.createdAt,
       deadline: data.deadline,
+      email: user.email ?? '',
       priority: data.priority,
       status: data.status,
       title: data.title,
+      uid: user.uid,
       updatedAt: serverTimestamp(),
     },
     { merge: true },
@@ -206,8 +214,10 @@ export async function savePlannedCourse(data: Omit<PlannedCourse, 'id'>) {
   const coursesRef = collection(db, 'users', user.uid, 'plannedCourses')
   const docRef = await addDoc(coursesRef, {
     credits: data.credits,
+    email: user.email ?? '',
     expectedGrade: data.expectedGrade,
     name: data.name,
+    uid: user.uid,
     updatedAt: serverTimestamp(),
   })
 
@@ -237,8 +247,10 @@ export async function updatePlannedCourse(data: PlannedCourse) {
     doc(db, 'users', user.uid, 'plannedCourses', data.id),
     {
       credits: data.credits,
+      email: user.email ?? '',
       expectedGrade: data.expectedGrade,
       name: data.name,
+      uid: user.uid,
       updatedAt: serverTimestamp(),
     },
     { merge: true },

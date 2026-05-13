@@ -21,6 +21,8 @@ service cloud.firestore {
         'category',
         'priority',
         'status',
+        'uid',
+        'email',
         'createdAt',
         'updatedAt'
       ])
@@ -32,6 +34,8 @@ service cloud.firestore {
       && data.category in ['Assignment', 'Exam', 'Project', 'Other']
       && data.priority in ['Low', 'Medium', 'High']
       && data.status in ['pending', 'done']
+      && data.uid == request.auth.uid
+      && data.email is string
       && data.createdAt is string;
     }
 
@@ -40,6 +44,8 @@ service cloud.firestore {
         'name',
         'credits',
         'expectedGrade',
+        'uid',
+        'email',
         'updatedAt'
       ])
       && data.name is string
@@ -50,7 +56,9 @@ service cloud.firestore {
       && data.credits <= 30
       && isNumber(data.expectedGrade)
       && data.expectedGrade >= 0
-      && data.expectedGrade <= 4;
+      && data.expectedGrade <= 4
+      && data.uid == request.auth.uid
+      && data.email is string;
     }
 
     match /users/{uid} {
@@ -79,6 +87,8 @@ service cloud.firestore {
             'note',
             'status',
             'totalCredits',
+            'uid',
+            'email',
             'createdAt'
           ])
           && isNumber(request.resource.data.currentGpa)
@@ -95,7 +105,9 @@ service cloud.firestore {
           && request.resource.data.note is string
           && request.resource.data.note.size() <= 240
           && request.resource.data.status in ['feasible', 'difficult', 'impossible']
-          && isNumber(request.resource.data.totalCredits);
+          && isNumber(request.resource.data.totalCredits)
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.email is string;
         allow update: if false;
       }
 

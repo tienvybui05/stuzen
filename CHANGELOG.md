@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-05-13 21:07
+
+- Added `uid` and `email` fields to newly saved GPA results, tasks, and planned courses for easier data collection/export.
+- Updated Firestore Security Rules to require saved user-owned documents to include the authenticated user's `uid` and a string `email`.
+- Verified the project with `npm run build` and `npm run lint`.
+
 ## 2026-05-13 21:00
 
 - Added Firestore persistence for logged-in users' Upcoming tasks.
