@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-05-13 22:22
+
+- Added `vercel.json` to force Vercel to build StuZen as a Next.js project.
+- Added `.vercelignore` to prevent old Vite `dist` output from being uploaded/deployed.
+- Verified the project with `npm run lint`; local `npm run build` was blocked by a locked `.next/turbopack` cache, so production verification will use Vercel remote build.
+
 ## 2026-05-13 21:43
 
 - Migrated the app build entry to Next.js App Router while preserving the existing StuZen UI modules.
