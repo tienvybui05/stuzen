@@ -106,7 +106,7 @@ export function ContactForm() {
         error={errors.name}
         label="Tên của bạn"
         onValueChange={(value) => updateField('name', value)}
-        placeholder="Ví dụ: Bùi Tiến Vy"
+        placeholder="Ví dụ: Nguyễn Văn A"
         type="text"
         value={values.name}
       />
