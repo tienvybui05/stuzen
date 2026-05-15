@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import '../src/index.css'
 
 export const metadata: Metadata = {
@@ -13,6 +14,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi">
+      <Script
+        async
+        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3421325358490202"
+        crossOrigin="anonymous"
+        strategy="afterInteractive"
+      />
       <body>{children}</body>
     </html>
   )
